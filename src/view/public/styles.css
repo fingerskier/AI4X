@@ -1,0 +1,168 @@
+:root {
+  --bg: #0e1116;
+  --panel: #161b22;
+  --ink: #e6edf3;
+  --muted: #8b949e;
+  --accent: #4363d8;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #21262d;
+}
+
+header h1 {
+  font-size: 1.1rem;
+  margin: 0;
+  letter-spacing: 0.08em;
+}
+
+.badge {
+  font-size: 0.8rem;
+  color: var(--muted);
+  background: var(--panel);
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+}
+
+main {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  align-items: flex-start;
+}
+
+canvas {
+  background: #000;
+  border: 1px solid #21262d;
+  image-rendering: pixelated;
+  width: 640px;
+  height: 640px;
+}
+
+aside {
+  flex: 1;
+  min-width: 220px;
+}
+
+aside h2 {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin: 1rem 0 0.4rem;
+}
+
+ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.2rem 0;
+  font-size: 0.9rem;
+}
+
+.swatch {
+  width: 0.8rem;
+  height: 0.8rem;
+  border-radius: 2px;
+  display: inline-block;
+}
+
+.hint {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.card {
+  background: var(--panel);
+  border: 1px solid #21262d;
+  border-radius: 6px;
+  padding: 0.5rem 0.6rem;
+  font-size: 0.85rem;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+}
+
+button {
+  background: var(--accent);
+  color: #fff;
+  border: 0;
+  border-radius: 6px;
+  padding: 0.35rem 0.8rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+button:disabled {
+  background: #30363d;
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+ul.clickable li {
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 0.25rem 0.4rem;
+}
+
+ul.clickable li:hover {
+  background: var(--panel);
+}
+
+ul.clickable li.active {
+  background: #21305c;
+  outline: 1px solid var(--accent);
+}
+
+ul.log {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.78rem;
+  color: var(--muted);
+  max-height: 9rem;
+  overflow-y: auto;
+}
+
+ul.log li {
+  padding: 0.1rem 0;
+}
+
+ul.legend li {
+  font-size: 0.82rem;
+}
+
+canvas {
+  cursor: crosshair;
+}
+
+code {
+  background: var(--panel);
+  padding: 0.1rem 0.3rem;
+  border-radius: 4px;
+}

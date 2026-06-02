@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI4X — game view</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header>
+      <h1>AI4X</h1>
+      <span id="role" class="badge">connecting…</span>
+      <span id="tick" class="badge">tick 0</span>
+      <span id="resources" class="badge" hidden>resources 0</span>
+    </header>
+
+    <main>
+      <canvas id="map" width="640" height="640"></canvas>
+
+      <aside>
+        <h2>Players</h2>
+        <ul id="players"></ul>
+
+        <!-- Human control panel: only shown when a player token is present. -->
+        <section id="panel" hidden>
+          <h2>Control panel</h2>
+          <div id="selected" class="card">No unit selected.</div>
+          <div class="row">
+            <button id="stopBtn" disabled>Stop</button>
+            <span class="hint">Click your unit, then click a tile to move it.</span>
+          </div>
+
+          <h2>Your units</h2>
+          <ul id="units" class="clickable"></ul>
+
+          <h2>Tile</h2>
+          <div id="tileinfo" class="card">Click a tile to inspect it.</div>
+
+          <h2>Command log</h2>
+          <ul id="log" class="log"></ul>
+        </section>
+
+        <!-- Spectators get a read-only notice instead of the panel. -->
+        <p id="spectatorNote" class="hint" hidden>
+          Spectator view — read only. You can see the whole map.
+        </p>
+
+        <h2>Legend</h2>
+        <ul id="legend" class="legend"></ul>
+
+        <p class="hint">
+          Players see only tiles near their own units (fog of war). Append
+          <code>?token=…</code> to control a slot.
+        </p>
+      </aside>
+    </main>
+
+    <script type="module" src="/client.js"></script>
+  </body>
+</html>
