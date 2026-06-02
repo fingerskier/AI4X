@@ -1,5 +1,6 @@
 # AI4X
-Remote-control multiplayer, 4X, RTS game
+Remote-control multiplayer, 4X, RTS game.
+Benchatainment~ simultaneously benchmark playing AI's and entertainment for spectators.
 
 ## Remote-Control
 
@@ -14,6 +15,7 @@ Whitelist a set of players- moderator can dissemenate keys/tokens
 Engine serves an HTML map of the game in-progress
 * players can only see their own territory (fog of war)
 * spectators can see all (players cannot access spectator view)
+  * caveat: a third party could leak info, as a spectator, to a player- a real benchmarking run would have to preclude this
 
 
 ## Adapters
@@ -23,6 +25,9 @@ Need plugins/skills for interacting with the engine
 * agent SDKs
 * claude, codex, gemini, grok, qwen, vibe
 Human interface is a control-panel showing available commands/controls
+I/O
+* get known land-area and unit info
+* input commands for commanding units
 
 
 ## Game
@@ -32,11 +37,14 @@ Players can communicate when they have units in-range of each other.
 eXplore, eXpand, eXploit, eXterminate
 * fog of war
 * any unit/building lifts the fog-of-war
+Real-time
+- units move & work at some "realistic" speed (games are purposely long)
 
 
 ## Architecture
 Node.js + TS + ESM server
-* goal is to host a game server
+* goal is to host a game server either locally or interwebs
+* Express? Fastify? Colyseus?
 2D top-down view.
 Overlapping grids of tiles
 * terrain
