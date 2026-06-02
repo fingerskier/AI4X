@@ -28,16 +28,63 @@ as a human control panel.
 ## Next steps (engineering)
 
 ### Core engine
-- [ ] **Pathfinding** — units currently give up when they hit a blocked tile.
-      Add A* over the terrain grid; respect movement cost per terrain.
-- [ ] **Buildings** — settlers should found a base; bases lift fog and produce
-      units. The README lists buildings as fog-lifters alongside units.
-- [ ] **The four X's** — only eXplore/eXploit are sketched. Add eXpand
-      (claiming territory) and eXterminate (combat resolution, unit death).
-- [ ] **Combat** — `hp` exists but nothing damages it yet. Define attack range,
-      damage, and who can attack whom.
+
+#### Pathfinding
+- [ ] **A\* over the terrain grid.** Units currently give up the moment they hit
+      a blocked tile (`Engine.stepMovement` sets `target = null`). Replace the
+      naive step-toward with a real path.
+  - New `src/game/pathfinding.ts`: `findPath(grid, from, to, { passable })`
+    returning a tile list, with per-terrain movement cost (plains 1, forest 2;
+    water/mountain impassable). Octile/Chebyshev heuristic to match 8-way moves.
+  - Store the computed path on the unit (`Unit.path: Vec2[]`); each tick consume
+    `speed` worth of steps along it instead of recomputing.
+  - Repath on failure: if the next tile became blocked (future: a building),
+    recompute once; if no path exists, clear the order and surface a reason.
+  - Acceptance: a unit ordered across water/mountains routes around them; an
+    unreachable target reports `{ ok: false, error: 'no path' }`.
+  - Touches: `engine.ts` (movement), `types.ts` (`Unit.path`), a `pathfinding`
+    unit test (deterministic map + known route).
+
+#### Base-founding (buildings)
+- [ ] **Settlers found bases; bases lift fog and train units.** README lists any
+      building as a fog-lifter alongside units.
+  - New `Building` type (`id`, `ownerId`, `x`, `y`, `type: 'base'`, `hp`,
+    production queue) and a `buildings: Map` on the engine.
+  - `engine.foundBase(ownerId, unitId)`: consume the settler on a buildable
+    tile (not water/mountain, not already occupied), create a base.
+  - Fog: extend `visibleTilesFor` to take buildings too (or generalize to any
+    "vision source" with a position + radius). Bases get a larger radius.
+  - Production: a base spends banked resources to queue units that spawn at the
+    base over N ticks. Add to `Engine.step`.
+  - Surface as MCP tool `found_base` + `train_unit`, REST `action: "found"` /
+    `"train"`, and control-panel buttons; include buildings in `StateView` and
+    draw them on the canvas.
+  - Acceptance: founding removes the settler and reveals a wider radius;
+    training drains resources and yields a unit after the build time.
+
+#### The four X's
+- [ ] **eXplore** — mostly present (fog lifts as units/bases move). Add a
+      per-player *explored* memory (last-seen tiles stay dimly visible rather
+      than snapping back to full black) so the map reflects what a player has
+      discovered. Touches `fog.ts`, `StateView`, client rendering.
+- [ ] **eXpand** — territory/claims. Bases project an ownership radius; overlap
+      contests tiles. Track `tile.owner` (or a separate claims grid — fits the
+      README's "overlapping grids" model) and expose claimed area in
+      `StateView` + the spectator scoreboard.
+- [ ] **eXploit** — deepen harvesting beyond the current 1/tick on ruins. Add
+      resource *types* (e.g. alloy from ruins, biomass from forest), a dedicated
+      harvester→base haul loop, and base storage caps. Feeds the eXpand/train
+      economy.
+- [ ] **eXterminate (combat)** — `Unit.hp` exists but nothing damages it. Define
+      attack range, damage, and cooldown per unit type; resolve attacks in
+      `Engine.step`; remove dead units/buildings and free their fog. Add MCP
+      `attack` tool + REST `action: "attack"` + panel control. Elimination of a
+      player's last base/units is a loss condition (ties into match lifecycle).
+
+#### Other engine work
 - [ ] **Proximity comms** — README: players can talk when units are in range.
-      Add a `/api/message` channel gated by unit proximity.
+      Add a `/api/message` (+ MCP `send_message`) channel gated by unit
+      proximity, delivered via the existing WS/notification plumbing.
 - [ ] **Triggers/modifiers grid** — the third "overlapping grid" from the
       README (ancient-tech effects, hazards). Currently only terrain + units.
 - [ ] **Match lifecycle** — win/lose conditions, match end, scoreboard export
