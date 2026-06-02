@@ -160,6 +160,21 @@ export class Engine {
   }
 
   /**
+   * A compact, tick-independent fingerprint of a player's visible state. Used to
+   * decide whether to push an MCP `resources/updated` notification: identical
+   * signatures across ticks mean nothing the player can see has changed, so we
+   * stay quiet. Deliberately excludes `tick` and units' internal moveProgress.
+   */
+  viewSignature(viewerId: PlayerId): string {
+    const v = this.viewFor(viewerId);
+    const units = v.units
+      .map((u) => `${u.id}@${u.x},${u.y}h${u.hp}${u.target ? `>${u.target.x},${u.target.y}` : ''}`)
+      .join('|');
+    const tiles = v.tiles.map((t) => `${t.x},${t.y}:${t.resources}`).join('|');
+    return `r${v.you?.resources ?? 0};u${units};t${tiles}`;
+  }
+
+  /**
    * Build a state snapshot filtered for a viewer.
    * @param viewerId player id, or `null` for the all-seeing spectator view.
    */

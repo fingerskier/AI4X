@@ -6,6 +6,7 @@ import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
 import type { Engine } from '../game/engine.js';
 import type { Principal, TokenRegistry } from '../auth/tokens.js';
 import { createMcpServer } from './mcpServer.js';
+import { STATE_URI, type McpSessionRegistry } from './mcpSessions.js';
 
 /**
  * MCP adapter. Exposes the agent control surface over two transports:
@@ -81,7 +82,11 @@ function requirePlayer(
   return principal;
 }
 
-export function createMcpRouter(engine: Engine, tokens: TokenRegistry): Router {
+export function createMcpRouter(
+  engine: Engine,
+  tokens: TokenRegistry,
+  sessions: McpSessionRegistry,
+): Router {
   const router = Router();
 
   router.get('/manifest', (_req, res) => {
@@ -93,6 +98,17 @@ export function createMcpRouter(engine: Engine, tokens: TokenRegistry): Router {
       },
       auth: 'Send a player token via Authorization: Bearer <token> on connect.',
       tools: MCP_TOOLS,
+      resources: [
+        {
+          uri: STATE_URI,
+          description: 'Your fog-of-war game view (same payload as get_state).',
+          subscribable: true,
+        },
+      ],
+      notifications:
+        `Subscribe to ${STATE_URI} (resources/subscribe) to receive ` +
+        'notifications/resources/updated whenever your visible state changes, ' +
+        'then resources/read it — react to events instead of polling.',
     });
   });
 
@@ -122,10 +138,14 @@ export function createMcpRouter(engine: Engine, tokens: TokenRegistry): Router {
           streamables.set(sid, transport!);
         },
       });
+      const { server, session } = createMcpServer(engine, principal);
+      sessions.add(session);
       transport.onclose = () => {
         if (transport!.sessionId) streamables.delete(transport!.sessionId);
+        sessions.remove(session);
+        engine.setConnected(principal.playerId!, false);
       };
-      await createMcpServer(engine, principal).connect(transport);
+      await server.connect(transport);
     }
 
     await transport.handleRequest(req, res, req.body);
@@ -151,8 +171,14 @@ export function createMcpRouter(engine: Engine, tokens: TokenRegistry): Router {
     if (!principal) return;
     const transport = new SSEServerTransport('/mcp/messages', res);
     sseTransports.set(transport.sessionId, transport);
-    res.on('close', () => sseTransports.delete(transport.sessionId));
-    await createMcpServer(engine, principal).connect(transport);
+    const { server, session } = createMcpServer(engine, principal);
+    sessions.add(session);
+    res.on('close', () => {
+      sseTransports.delete(transport.sessionId);
+      sessions.remove(session);
+      engine.setConnected(principal.playerId!, false);
+    });
+    await server.connect(transport);
   });
 
   router.post('/messages', async (req, res) => {

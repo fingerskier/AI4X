@@ -19,7 +19,8 @@ as a human control panel.
 - [x] Canvas map view + **human control panel** (select unit, click-to-move,
       tile inspector, command log).
 - [x] **MCP server** over Streamable HTTP and legacy HTTP+SSE, sessions bound to
-      a player token. Tools: `get_state`, `list_units`, `move_unit`, `stop_unit`.
+      a player token. Tools: `get_state`, `list_units`, `move_unit`, `stop_unit`;
+      subscribable `ai4x://state` resource with server-pushed change notifications.
 - [x] Reference adapters: `mcp-agent` (MCP) and `random-agent` (REST).
 - [x] Server framework decided: Express + `ws` (ADR 0001).
 - [x] Engine unit tests (`npm test`).
@@ -50,8 +51,9 @@ as a human control panel.
 - [ ] **Per-agent adapter skills** — claude / codex / gemini / grok / qwen /
       vibe. Start from `examples/mcp-agent.mjs` (each just needs the MCP URL +
       a player token).
-- [ ] **MCP notifications** — push tick/state changes as server→client SSE
-      notifications so agents can react without polling `get_state`.
+- [x] **MCP notifications** — `ai4x://state` resource with subscriptions; the
+      tick loop pushes `notifications/resources/updated` on real change (idle
+      worlds stay quiet) over both transports. Agents react instead of polling.
 - [ ] **Richer tools/panel** — found base, harvest, attack, and (later) the
       proximity comms channel, surfaced both as MCP tools and panel buttons.
 - [ ] **WS commands** — allow issuing orders over the socket, not just polling

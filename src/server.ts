@@ -8,6 +8,7 @@ import { Engine } from './game/engine.js';
 import { TokenRegistry } from './auth/tokens.js';
 import { createApiRouter } from './api/routes.js';
 import { createMcpRouter } from './api/mcp.js';
+import { McpSessionRegistry } from './api/mcpSessions.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -25,12 +26,13 @@ export interface GameServer {
 export function createServer(config: Config): GameServer {
   const engine = new Engine(config);
   const tokens = new TokenRegistry();
+  const mcpSessions = new McpSessionRegistry();
 
   const app = express();
   app.use(express.json());
 
   app.use('/api', createApiRouter(engine, tokens));
-  app.use('/mcp', createMcpRouter(engine, tokens));
+  app.use('/mcp', createMcpRouter(engine, tokens, mcpSessions));
 
   // Static spectator/player map view.
   app.use('/', express.static(path.join(__dirname, 'view', 'public')));
@@ -79,6 +81,7 @@ export function createServer(config: Config): GameServer {
       timer = setInterval(() => {
         engine.step();
         broadcast();
+        mcpSessions.notifyTick(engine); // push resources/updated to subscribers
       }, config.tickMs);
 
       httpServer.listen(config.port, config.host, () => {

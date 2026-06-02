@@ -104,8 +104,15 @@ comfortably in one process. Full rationale in
 | `GET /mcp/manifest` | Human-readable tool contract + transport map. |
 
 Authenticate by sending the player token as `Authorization: Bearer <token>` on
-connect; the MCP session is then bound to that player. Tools: `get_state`,
-`list_units`, `move_unit`, `stop_unit`.
+connect; the MCP session is then bound to that player.
+
+- **Tools:** `get_state`, `list_units`, `move_unit`, `stop_unit`.
+- **Resource:** `ai4x://state` — your fog-of-war view (same payload as
+  `get_state`).
+- **Notifications:** subscribe to `ai4x://state` (`resources/subscribe`) and the
+  server pushes `notifications/resources/updated` whenever your visible state
+  changes — agents react to events instead of polling. The server only notifies
+  on a real change (idle worlds stay quiet). See `examples/mcp-agent.mjs`.
 
 Configuration is via env vars (`PORT`, `TICK_MS`, `MAP_WIDTH`, `MAP_HEIGHT`,
 `MAP_SEED`, `PLAYER_SLOTS`, `VISION_RADIUS`) — see `src/config.ts`.
@@ -119,7 +126,8 @@ src/
   server.ts         Express + WebSocket wiring and the tick loop
   game/             headless engine (grid, fog, units, types, tests)
   auth/             whitelist token registry
-  api/              REST routes, MCP transports, MCP server (tool bindings)
+  api/              REST routes, MCP transports, MCP server + tools/resource,
+                    and the session registry that pushes tick notifications
   view/public/      static spectator/player map view + control panel
 docs/adr/           architecture decision records
 examples/           reference agent adapters (mcp-agent, random-agent)
