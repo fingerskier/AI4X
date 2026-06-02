@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI4X — game view</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header>
+      <h1>AI4X</h1>
+      <span id="role" class="badge">connecting…</span>
+      <span id="tick" class="badge">tick 0</span>
+    </header>
+
+    <main>
+      <canvas id="map" width="640" height="640"></canvas>
+      <aside>
+        <h2>Players</h2>
+        <ul id="players"></ul>
+        <h2>Your units</h2>
+        <ul id="units"></ul>
+        <p class="hint">
+          Spectators see the whole map. Players see only tiles near their own
+          units (fog of war). Append <code>?token=…</code> to control a slot.
+        </p>
+      </aside>
+    </main>
+
+    <script type="module" src="/client.js"></script>
+  </body>
+</html>

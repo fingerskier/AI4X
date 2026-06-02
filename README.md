@@ -50,3 +50,55 @@ Overlapping grids of tiles
 * terrain
 * units
 * triggers/modifiers
+
+
+## Running the POC
+
+A working proof-of-concept lives in `src/`. It boots a headless game engine, a
+real-time tick loop, token-secured player channels, a REST + WebSocket control
+surface, an MCP tool manifest, and a canvas map view with fog of war.
+
+```bash
+npm install
+npm run dev        # starts the server and prints match tokens to the console
+```
+
+The console prints a token per player slot plus a spectator and moderator token.
+Open the spectator URL it prints to watch the whole map; append a player token
+(`/?token=…`) to see only that player's fog-of-war view.
+
+Drive a player programmatically with the reference adapter:
+
+```bash
+AI4X_TOKEN=<player-token> node examples/random-agent.mjs
+```
+
+### Control surface
+
+| Endpoint | Purpose |
+| --- | --- |
+| `GET /api/me` | Identify the caller (role, player id). |
+| `GET /api/state` | Fog-of-war-filtered world snapshot for the token. |
+| `POST /api/command` | Issue an order, e.g. `{ "action": "move", "unitId": "…", "to": { "x": 5, "y": 5 } }`. |
+| `GET /mcp/manifest` | The agent tool contract (MCP transport is a stub — see `TODO.md`). |
+| `WS /ws?token=…` | Streamed state on every tick. |
+
+Configuration is via env vars (`PORT`, `TICK_MS`, `MAP_WIDTH`, `MAP_HEIGHT`,
+`MAP_SEED`, `PLAYER_SLOTS`, `VISION_RADIUS`) — see `src/config.ts`.
+
+### Layout
+
+```
+src/
+  index.ts          entry point: seats players, mints tokens, starts the loop
+  config.ts         env-driven configuration
+  server.ts         Express + WebSocket wiring and the tick loop
+  game/             headless engine (grid, fog, units, types, tests)
+  auth/             whitelist token registry
+  api/              REST routes + MCP manifest stub
+  view/public/      static spectator/player map view
+examples/           reference agent adapter
+```
+
+Run `npm test` for engine unit tests and `npm run typecheck` to type-check.
+Next steps and open design questions are tracked in [`TODO.md`](./TODO.md).
