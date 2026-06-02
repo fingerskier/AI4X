@@ -10,14 +10,16 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.js",
-    "build": "tsc && mkdir -p dist/view && cp -r src/view/public dist/view/public",
+    "build": "tsc && rm -rf dist/view/public && mkdir -p dist/view && cp -r src/view/public dist/view/public",
     "typecheck": "tsc --noEmit",
     "test": "node --test --import tsx src/**/*.test.ts"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "express": "^4.19.2",
     "nanoid": "^5.0.7",
-    "ws": "^8.18.0"
+    "ws": "^8.18.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/express": "^4.17.21",

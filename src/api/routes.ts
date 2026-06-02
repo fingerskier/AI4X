@@ -70,6 +70,15 @@ export function createApiRouter(engine: Engine, tokens: TokenRegistry): Router {
         res.status(result.ok ? 200 : 400).json(result);
         return;
       }
+      case 'stop': {
+        if (typeof unitId !== 'string') {
+          res.status(400).json({ error: 'stop requires { unitId }' });
+          return;
+        }
+        const result = engine.stopUnit(p.playerId, unitId);
+        res.status(result.ok ? 200 : 400).json(result);
+        return;
+      }
       default:
         res.status(400).json({ error: `unknown action: ${action}` });
     }

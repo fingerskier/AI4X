@@ -56,7 +56,8 @@ Overlapping grids of tiles
 
 A working proof-of-concept lives in `src/`. It boots a headless game engine, a
 real-time tick loop, token-secured player channels, a REST + WebSocket control
-surface, an MCP tool manifest, and a canvas map view with fog of war.
+surface, a full **MCP server** (Streamable HTTP + legacy SSE), and a canvas map
+view that doubles as a **human control panel** with fog of war.
 
 ```bash
 npm install
@@ -65,23 +66,46 @@ npm run dev        # starts the server and prints match tokens to the console
 
 The console prints a token per player slot plus a spectator and moderator token.
 Open the spectator URL it prints to watch the whole map; append a player token
-(`/?token=…`) to see only that player's fog-of-war view.
+(`/?token=…`) to play that slot — click one of your units, then click a tile to
+move it.
 
-Drive a player programmatically with the reference adapter:
+Drive a player programmatically with either reference adapter:
 
 ```bash
-AI4X_TOKEN=<player-token> node examples/random-agent.mjs
+AI4X_TOKEN=<player-token> node examples/mcp-agent.mjs      # MCP (recommended)
+AI4X_TOKEN=<player-token> node examples/random-agent.mjs   # plain REST
 ```
 
+### Server framework: Express + `ws`
+
+Chosen over Colyseus because fog of war means every viewer needs a *different*
+filtered snapshot (Colyseus's auto-synced shared room state buys little), MCP
+needs plain HTTP routes, and the scale (2–12 players, dozens of spectators) sits
+comfortably in one process. Full rationale in
+[`docs/adr/0001-server-framework.md`](./docs/adr/0001-server-framework.md).
+
 ### Control surface
+
+**REST** (simple, framework-agnostic):
 
 | Endpoint | Purpose |
 | --- | --- |
 | `GET /api/me` | Identify the caller (role, player id). |
 | `GET /api/state` | Fog-of-war-filtered world snapshot for the token. |
-| `POST /api/command` | Issue an order, e.g. `{ "action": "move", "unitId": "…", "to": { "x": 5, "y": 5 } }`. |
-| `GET /mcp/manifest` | The agent tool contract (MCP transport is a stub — see `TODO.md`). |
+| `POST /api/command` | Issue an order: `{ "action": "move", "unitId": "…", "to": { "x": 5, "y": 5 } }` or `{ "action": "stop", "unitId": "…" }`. |
 | `WS /ws?token=…` | Streamed state on every tick. |
+
+**MCP** (for agent CLIs/SDKs — claude / codex / gemini / grok / qwen / vibe):
+
+| Endpoint | Purpose |
+| --- | --- |
+| `POST/GET/DELETE /mcp` | Streamable HTTP transport (recommended). |
+| `GET /mcp/sse` + `POST /mcp/messages` | Legacy HTTP+SSE transport. |
+| `GET /mcp/manifest` | Human-readable tool contract + transport map. |
+
+Authenticate by sending the player token as `Authorization: Bearer <token>` on
+connect; the MCP session is then bound to that player. Tools: `get_state`,
+`list_units`, `move_unit`, `stop_unit`.
 
 Configuration is via env vars (`PORT`, `TICK_MS`, `MAP_WIDTH`, `MAP_HEIGHT`,
 `MAP_SEED`, `PLAYER_SLOTS`, `VISION_RADIUS`) — see `src/config.ts`.
@@ -95,9 +119,10 @@ src/
   server.ts         Express + WebSocket wiring and the tick loop
   game/             headless engine (grid, fog, units, types, tests)
   auth/             whitelist token registry
-  api/              REST routes + MCP manifest stub
-  view/public/      static spectator/player map view
-examples/           reference agent adapter
+  api/              REST routes, MCP transports, MCP server (tool bindings)
+  view/public/      static spectator/player map view + control panel
+docs/adr/           architecture decision records
+examples/           reference agent adapters (mcp-agent, random-agent)
 ```
 
 Run `npm test` for engine unit tests and `npm run typecheck` to type-check.

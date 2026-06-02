@@ -1,9 +1,10 @@
 # AI4X — TODO & open questions
 
 This file tracks next steps for the POC and the design questions that need
-answers before the project hardens. The POC (this commit) proves the core loop:
-a headless engine, fog-of-war views, token-secured channels, a REST/WS control
-surface, an MCP manifest stub, and a canvas spectator/player view.
+answers before the project hardens. The POC proves the core loop: a headless engine, fog-of-war views,
+token-secured channels, a REST/WS control surface, a full MCP server
+(Streamable HTTP + legacy SSE), and a canvas spectator/player view that doubles
+as a human control panel.
 
 ## What the POC already does
 
@@ -13,11 +14,14 @@ surface, an MCP manifest stub, and a canvas spectator/player view.
 - [x] Unit movement orders; harvester resource collection.
 - [x] Fog of war per player; all-seeing spectator view.
 - [x] Whitelist token auth (player / spectator / moderator) with channel claim.
-- [x] REST API (`/api/me`, `/api/state`, `/api/command`).
-- [x] WebSocket state broadcast on every tick.
-- [x] Static canvas map view with fog rendering.
-- [x] MCP tool manifest (`/mcp/manifest`) — contract published, transport TBD.
-- [x] Reference `random-agent` adapter over HTTP.
+- [x] REST API (`/api/me`, `/api/state`, `/api/command` — move + stop).
+- [x] WebSocket state broadcast on every tick (spectator payload cached once).
+- [x] Canvas map view + **human control panel** (select unit, click-to-move,
+      tile inspector, command log).
+- [x] **MCP server** over Streamable HTTP and legacy HTTP+SSE, sessions bound to
+      a player token. Tools: `get_state`, `list_units`, `move_unit`, `stop_unit`.
+- [x] Reference adapters: `mcp-agent` (MCP) and `random-agent` (REST).
+- [x] Server framework decided: Express + `ws` (ADR 0001).
 - [x] Engine unit tests (`npm test`).
 
 ## Next steps (engineering)
@@ -39,13 +43,17 @@ surface, an MCP manifest stub, and a canvas spectator/player view.
       for benchmarking runs.
 
 ### Transport & adapters
-- [ ] **Real MCP server** — implement with `@modelcontextprotocol/sdk`
-      (streamable-HTTP), exposing the tools in `src/api/mcp.ts`, each bound to a
-      player token. Replace the manifest stub.
+- [x] **Real MCP server** — Streamable HTTP + legacy SSE, sessions bound to a
+      player token (`src/api/mcp.ts`, `src/api/mcpServer.ts`).
+- [x] **Human control panel** — select unit, click-to-move, tile inspector, and
+      command log in the view when a player token is present.
 - [ ] **Per-agent adapter skills** — claude / codex / gemini / grok / qwen /
-      vibe. Start from `examples/random-agent.mjs`.
-- [ ] **Human control panel** — buttons/forms in the view for the listed I/O
-      (inspect land/units, command units) when a player token is present.
+      vibe. Start from `examples/mcp-agent.mjs` (each just needs the MCP URL +
+      a player token).
+- [ ] **MCP notifications** — push tick/state changes as server→client SSE
+      notifications so agents can react without polling `get_state`.
+- [ ] **Richer tools/panel** — found base, harvest, attack, and (later) the
+      proximity comms channel, surfaced both as MCP tools and panel buttons.
 - [ ] **WS commands** — allow issuing orders over the socket, not just polling
       REST, to cut latency.
 
@@ -65,9 +73,9 @@ surface, an MCP manifest stub, and a canvas spectator/player view.
 
 ## Open questions (need product decisions)
 
-1. **Framework**: README floats Express / Fastify / Colyseus. POC uses Express +
-   `ws`. Colyseus gives rooms/state-sync out of the box and suits real-time
-   multiplayer — switch before the netcode grows, or stay lean? 
+1. **Framework**: ~~Express / Fastify / Colyseus?~~ **Resolved → Express + `ws`**
+   (ADR 0001). Revisit only if we pivot to many concurrent public matches with
+   matchmaking, or spectator counts reach the thousands.
 2. **Tick rate vs. agent latency**: games are "purposely long." What real
    cadence (seconds? minutes per tick?) balances LLM-agent think-time against
    watchable spectator pacing?
@@ -89,7 +97,9 @@ surface, an MCP manifest stub, and a canvas spectator/player view.
 ```bash
 npm install
 npm run dev          # tsx watch; prints player/spectator/moderator tokens
-# open the spectator URL printed in the console
-# in another shell, drive a player:
-AI4X_TOKEN=<player-token> node examples/random-agent.mjs
+# open the spectator URL printed in the console, or a player token to use the
+# human control panel (click a unit, then click a tile to move it)
+# in another shell, drive a player programmatically:
+AI4X_TOKEN=<player-token> node examples/mcp-agent.mjs     # MCP
+AI4X_TOKEN=<player-token> node examples/random-agent.mjs  # plain REST
 ```

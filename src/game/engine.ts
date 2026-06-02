@@ -97,6 +97,16 @@ export class Engine {
     return { ok: true };
   }
 
+  /** Cancel a unit's current move order. */
+  stopUnit(ownerId: PlayerId, unitId: EntityId): CommandResult {
+    const unit = this.units.get(unitId);
+    if (!unit) return { ok: false, error: 'unknown unit' };
+    if (unit.ownerId !== ownerId) return { ok: false, error: 'not your unit' };
+    unit.target = null;
+    unit.moveProgress = 0;
+    return { ok: true };
+  }
+
   // --- Simulation -----------------------------------------------------------
 
   /** Advance the world by one tick. Called by the server's game loop. */

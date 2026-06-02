@@ -30,7 +30,7 @@ export function createServer(config: Config): GameServer {
   app.use(express.json());
 
   app.use('/api', createApiRouter(engine, tokens));
-  app.use('/mcp', createMcpRouter());
+  app.use('/mcp', createMcpRouter(engine, tokens));
 
   // Static spectator/player map view.
   app.use('/', express.static(path.join(__dirname, 'view', 'public')));
@@ -57,10 +57,18 @@ export function createServer(config: Config): GameServer {
   let timer: NodeJS.Timeout | null = null;
 
   function broadcast(): void {
+    // Spectators all receive an identical payload, so build it once per tick
+    // (see ADR 0001 — cheap mitigation for the "dozens of spectators" case).
+    let spectatorPayload: string | null = null;
     for (const socket of wss.clients) {
       if (socket.readyState !== WebSocket.OPEN) continue;
       const viewerId = viewerOf.get(socket) ?? null;
-      socket.send(JSON.stringify({ type: 'state', data: engine.viewFor(viewerId) }));
+      if (viewerId === null) {
+        spectatorPayload ??= JSON.stringify({ type: 'state', data: engine.viewFor(null) });
+        socket.send(spectatorPayload);
+      } else {
+        socket.send(JSON.stringify({ type: 'state', data: engine.viewFor(viewerId) }));
+      }
     }
   }
 
